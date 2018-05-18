@@ -21,7 +21,7 @@ def printTitle(soup, url):
 
 	# Making sure we found the recipe name
 	if not recipeName:
-		print("Error: Didn't find the recipe title. Found:")
+		print("Error: Didn't find the recipe title.")
 		sys.exit(2)
 
 	# Bulding the link in the wiki
@@ -94,33 +94,45 @@ def printIngredients(soup):
 	print("")
 	print("====Ingredients====")
 
-	# The webpage has 2 sections of ingredients
-	# Grab the first one
-	panel = soup.find_all("div", "panel-body")
-	if(len(panel) < 1):
-		print("Error: Wasn't able to find ingredients section")
+	# Grabbing ingredients and their proportions
+	ingredientsList = soup.find_all("li", "wprm-recipe-ingredient")
+	if not ingredientsList:
+		print("Error: Didn't find any ingredients.")
 		sys.exit(2)
 
-	ingredientSection = panel[0].find_all("ul", "list-ingredients")[0]
-
-	# Grabbing ingredients and their proportions
-	proportions = ingredientSection.find_all("span", itemprop="amount")
-	item = ingredientSection.find_all("span", itemprop="name")
-
 	# Printing ingredients/proportions
-	i = 0
-	for p in proportions:
-		# Some recipies don't have proportions for their ingredients.
-		# Eg: "Sliced tomato", "Salt and pepper to taste"
-		# This check is to help our formatting so that we don't get a leading space
-		#	in our ingredients list when this happens
-		if(p.getText().strip() == ""):
-			print("  * {0}".format(item[i].getText().strip()))
+	for i in ingredientsList:
+		# Getting the amount
+		tmp = i.find("span", "wprm-recipe-ingredient-amount")
+		if not tmp:
+			print("Error: Didn't find the amount for one of the ingredients.")
+			sys.exit(2)
 		else:
-			print("  * {0} {1}".format(p.getText().strip(), item[i].getText().strip()))
+			amount = tmp.getText()
 
-		i = i + 1
+		# Getting the unit of measurement
+		# Not every ingredient has a unit of measurement (eg: 1 apple). 
+		# Don't throw a fit if it's not there
+		tmp = i.find("span", "wprm-recipe-ingredient-unit")
+		if tmp:
+			unit = tmp.getText()
 
+		# Getting the name of the item
+		tmp = i.find("span", "wprm-recipe-ingredient-name")
+		if not tmp:
+			print("Error: Didn't find the name for one of the ingredients.")
+			sys.exit(2)
+		else:
+			name = tmp.getText()
+
+
+		## Printing the ingredient 
+		# Sometimes there is no unit of measurement (Eg: 3 apples, 1 green pepper)
+		# Make sure we don't heck up
+		if not unit:
+			print("  * {0} {1}".format(amount, name))
+		else:
+			print("  * {0} {1} {2}".format(amount, unit, name))
 
 def printInstructions(soup):
 	# The webpage has 4 sections of instructions: [Header / Instruction body] * 2
@@ -155,7 +167,7 @@ def printInstructions(soup):
 ##################################################
 # Getting command line args
 if(len(sys.argv) != 2):
-	print("Usage: python3 {0} [url of a recipe from thePioneerWoman.com]".format(sys.argv[0]))
+	print("Usage: python3 {0} [url of a recipe from budgetbytes.com]".format(sys.argv[0]))
 	print("Example: python3 {0} https://www.budgetbytes.com/pork-peanut-dragon-noodles/".format(sys.argv[0]))
 	sys.exit(0)
 
@@ -179,6 +191,6 @@ soup = BeautifulSoup(page.content, 'html.parser');
 #	- Cook time
 #	- Source link
 printTitle(soup, sys.argv[1])
-#printIngredients(soup)
+printIngredients(soup)
 #printInstructions(soup)
 
