@@ -67,6 +67,9 @@ $ python3 parseBudgetBytes.py https://www.budgetbytes.com/slow-cooker-chicken-du
   - Remove the lid from the slow cooker and drop the dumpling batter into the soup by the heaping spoonful. Return the lid to the slow cooker and allow the dumplings to steam for 20 minutes. After 20 minutes they should have fluffed and expanded from the heat. Although they may look moist on the outside, they will be light and fluffy on the inside. Serve hot.
 ```
 
+From this point, the parsed recipe can be copy/pasted into a new page on your wiki:
+
+![Screenshot](https://i.imgur.com/2y6A0BU.png)
 
 ## Built With
 
