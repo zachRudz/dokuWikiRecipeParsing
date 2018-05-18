@@ -1,4 +1,4 @@
-# This script will parse a recipe from thePioneerWoman.com, 
+# This script will parse a recipe from budgetBytes.com, 
 # and output it in dokuwiki format to stdout.
 
 ## Reqirements: Beautiful soup, requests
@@ -6,8 +6,8 @@
 # pip3 install requests
 
 ## Usage:
-# python3 parsePioneerWomanRecipe.py [url of recipe]
-# python3 parsePioneerWomanRecipe.py http://thepioneerwoman.com/cooking/easy-mulligatawny/
+# python3 parseBudgetBytes.py [url of recipe]
+# python3 parseBudgetBytes.py https://www.budgetbytes.com/pork-peanut-dragon-noodles/
 
 import re
 import sys
@@ -17,47 +17,66 @@ from bs4 import BeautifulSoup
 ## Print the title of the recipe
 def printTitle(soup, url):
 	## Grabbing the recipe name
-	recipeName = soup.find_all("h2", 'entry-title')
+	recipeName = soup.find("h2", 'wprm-recipe-name')
 
 	# Making sure we found the recipe name
-	if(len(recipeName) != 1):
-		print("Error: Encountered unexpected entries when getting the recipe title. Found:")
-		for r in recipeName:
-			print(r.getText())
+	if not recipeName:
+		print("Error: Didn't find the recipe title. Found:")
 		sys.exit(2)
 
 	# Bulding the link in the wiki
-	wikiLink = recipeName[0].getText().replace(" ", "").lower()
+	wikiLink = recipeName.getText().replace(" ", "").lower()
 
 
 	## Grabbing the serving size, cook time, and prep time
-	prepSummary = soup.find_all("div", "recipe-summary-time")
-
-	# Making sure we found the preperation info
-	if(len(prepSummary) < 1):
-		print("Error: Wasn't able to find preperation times and serving info.")
+	# Time spent preparing
+	prepTimeContainer = soup.find("div", "wprm-recipe-prep-time-container")
+	if not prepTimeContainer:
+		print("Error: Wasn't able to find the prep time.")
 		sys.exit(2)
+	else:
+		# Stripping info from the container.
+		# We're parsing the container rather than the spans in the div 
+		#	because the time elapsed and the unit of time are in different spans.
+		prepTime = prepTimeContainer.getText()
+		prepTime = prepTime.replace("\n Prep Time ", "")
 
-	# There's multiple prep summaries on the webpage. (Top sidebar + bottom).
-	# Isolate only one, so we can pull preptime and serving size
-	prepInfo = prepSummary[0].find_all('dd')
 
-	# Grabbing serving size
-	prepTime = prepInfo[0].getText()
-	difficulty = prepInfo[1].getText()
-	cookTime = prepInfo[2].getText()
-	servingSize = prepInfo[3].getText()
+	# Time spent cooking
+	cookTimeContainer = soup.find("div", "wprm-recipe-cook-time-container")
+	if not cookTimeContainer:
+		print("Error: Wasn't able to find the cook time.")
+		sys.exit(2)
+	else:
+		# Stripping info from the container.
+		# We're parsing the container rather than the spans in the div 
+		#	because the time elapsed and the unit of time are in different spans.
+		cookTime = cookTimeContainer.getText()
+		cookTime = cookTime.replace("\n Cook Time ", "")
+
+
+	# Number of servings
+	numServingsContainer = soup.find("span", "wprm-recipe-servings")
+	if not numServingsContainer:
+		print("Error: Wasn't able to find the number of servings.")
+		sys.exit(2)
+	else:
+		# Stripping info from the container.
+		servingSize = numServingsContainer.getText()
+
+	# No difficulty listed on this site.
+	difficulty = ""
 
 
 	## Printing wiki page name
 	print("")
-	print("====={0}=====".format(recipeName[0].getText()))
+	print("====={0}=====".format(recipeName.getText()))
 
 	## Printing table entry for this recipe
 	print("^Name^Meat^Serves^Difficulty^Prep time^Cook time^Tried it?^Rating^Source rating^Calories^Protein^Source^")
 
 	# URL
-	print("|[[.:{0}|{1}]]|".format(wikiLink, recipeName[0].getText()), end='')
+	print("|[[.:{0}|{1}]]|".format(wikiLink, recipeName.getText()), end='')
 
 	# Meat type, serving size, prep time, cook time
 	print("|{0}|{1}|{2}|{3}|".format(servingSize, difficulty, prepTime, cookTime), end='')
@@ -66,7 +85,7 @@ def printTitle(soup, url):
 	print("No|||||", end='')
 
 	# Source
-	print("[[{0}|The Pioneer Woman]]|".format(url))
+	print("[[{0}|Budget Bytes]]|".format(url))
 
 
 
@@ -137,7 +156,7 @@ def printInstructions(soup):
 # Getting command line args
 if(len(sys.argv) != 2):
 	print("Usage: python3 {0} [url of a recipe from thePioneerWoman.com]".format(sys.argv[0]))
-	print("Example: python3 {0} http://thepioneerwoman.com/cooking/easy-mulligatawny/".format(sys.argv[0]))
+	print("Example: python3 {0} https://www.budgetbytes.com/pork-peanut-dragon-noodles/".format(sys.argv[0]))
 	sys.exit(0)
 
 # Getting the website
@@ -160,6 +179,6 @@ soup = BeautifulSoup(page.content, 'html.parser');
 #	- Cook time
 #	- Source link
 printTitle(soup, sys.argv[1])
-printIngredients(soup)
-printInstructions(soup)
+#printIngredients(soup)
+#printInstructions(soup)
 
