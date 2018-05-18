@@ -103,11 +103,10 @@ def printIngredients(soup):
 	# Printing ingredients/proportions
 	for i in ingredientsList:
 		# Getting the amount
+		# Not every ingredient has an amount (eg: pepper to taste). 
+		# Don't throw a fit if it's not there
 		tmp = i.find("span", "wprm-recipe-ingredient-amount")
-		if not tmp:
-			print("Error: Didn't find the amount for one of the ingredients.")
-			sys.exit(2)
-		else:
+		if tmp:
 			amount = tmp.getText()
 
 		# Getting the unit of measurement
@@ -128,35 +127,26 @@ def printIngredients(soup):
 
 		## Printing the ingredient 
 		# Sometimes there is no unit of measurement (Eg: 3 apples, 1 green pepper)
+		# There is also sometimes no amount (Eg: Pepper to taste)
 		# Make sure we don't heck up
+		if not unit and not amount:
+			print("  * {0}".format(name))
 		if not unit:
 			print("  * {0} {1}".format(amount, name))
 		else:
 			print("  * {0} {1} {2}".format(amount, unit, name))
 
 def printInstructions(soup):
-	# The webpage has 4 sections of instructions: [Header / Instruction body] * 2
-	# Grab the first instruction body 
-	instructionSections = soup.find_all("div", id=re.compile("recipe-instructions*"))
-	if(len(instructionSections)  < 2):
-		print("Error: Wasn't able to find instructions section")
+	instructionsList = soup.find_all("div", "wprm-recipe-instruction-text")
+	if(len(instructionsList)  < 1):
+		print("Error: Wasn't able to find instructions")
 		sys.exit(2)
-
-	# Isolating panel of instructions
-	instructionPanel = instructionSections[1].find_all("div", "panel-body")
-	if(len(instructionPanel) < 1):
-		print("Error: Wasn't able to find instructions section")
-		sys.exit(2)
-
-	# Formatting
-	instructions = instructionPanel[0].getText()
-	instructions = instructions.replace("\n", "")
-	instructions = instructions.replace("\t", "")
 
 	# Printing to dokuwiki format
 	print("")
 	print("====Instructions====")
-	print(instructions)
+	for i in instructionsList:
+		print("  - {}".format(i.getText()))
 
 
 
@@ -192,5 +182,4 @@ soup = BeautifulSoup(page.content, 'html.parser');
 #	- Source link
 printTitle(soup, sys.argv[1])
 printIngredients(soup)
-#printInstructions(soup)
-
+printInstructions(soup)
